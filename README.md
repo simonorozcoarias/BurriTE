@@ -371,8 +371,7 @@ BurriTE_v4_dag.html
 
 ### Presence/absence matrix
 
-`09_final/Presence_Absence_matrix.txt` contains one row per pan-locus and the
-following metadata columns:
+`09_final/Presence_Absence_matrix.txt` contains one row per pan-locus and the following metadata columns:
 
 ```text
 Chrm  start  end  LOC_ID  family  superfamily  TE_length  <genomes...>
@@ -388,10 +387,7 @@ Genome cells can contain:
 | `Ambiguous` | Both flanks map, but the interval is not decisively present or absent |
 | `NA:<reason>` | One or both flanks could not be evaluated reliably |
 
-The default presence rule accepts an inter-flank span within 20% of the
-pan-locus TE length. An absence is called when the gap between flanks is 0–10
-bp. Direct annotation evidence takes precedence over an uncertain flank
-round-trip and is recorded as `Present:annot`.
+The default presence rule accepts an inter-flank span within 20% of the pan-locus TE length. An absence is called when the gap between flanks is 0–10 bp. Direct annotation evidence takes precedence over an uncertain flank round-trip and is recorded as `Present:annot`.
 
 ### Final GFF3 modes
 
@@ -401,9 +397,7 @@ With the default:
 --final_annotation burrite
 ```
 
-BurriTE writes `<sample>_TEs.gff`, containing pan-loci classified as present or
-absent for that genome. Present copies use the `transposable_element` feature
-type and absent sites use `insertion_site`.
+BurriTE writes `<sample>_TEs.gff`, containing pan-loci classified as present or absent for that genome. Present copies use the `transposable_element` feature type and absent sites use `insertion_site`.
 
 With:
 
@@ -411,9 +405,7 @@ With:
 --final_annotation all
 ```
 
-BurriTE writes `<sample>_all_TEs.gff` and additionally integrates the genome's
-own RepeatMasker and GraffiTE features. Overlapping calls are deduplicated with
-the precedence:
+BurriTE writes `<sample>_all_TEs.gff` and additionally integrates the genome's own RepeatMasker and GraffiTE features. Overlapping calls are deduplicated with the precedence:
 
 ```text
 BurriTE > GraffiTE > RepeatMasker
@@ -435,136 +427,10 @@ For caching to work:
 - Avoid mixing `main.nf` and Python helper files from different BurriTE
   revisions.
 
-Each genome and chromosome is cached independently. A failure in one Liftoff
-job does not require completed RepeatMasker or Minimap2 jobs to run again.
+Each genome and chromosome is cached independently. A failure in one Liftoff job does not require completed RepeatMasker or Minimap2 jobs to run again.
 
-The nested GraffiTE launcher also uses `-resume`, with its work directory under
-`<outdir>/.graffite_work`. Nevertheless, supplying `--graffite_vcf` is the
-deterministic way to guarantee that an already completed GraffiTE analysis is
+The nested GraffiTE launcher also uses `-resume`, with its work directory under `<outdir>/.graffite_work`. Nevertheless, supplying `--graffite_vcf` is the deterministic way to guarantee that an already completed GraffiTE analysis is
 not relaunched.
-
-## Validation and debugging
-
-### Per-genome BED validation
-
-Before pan-locus collapse, BurriTE requires exactly one BED for every expected
-genome. The report is written to:
-
-```text
-06_lift_to_ref/validation/sample_bed_validation.tsv
-```
-
-If a BED is empty, inspect the matching first-round Liftoff log:
-
-```bash
-grep -RniE 'ERROR|Incorrect|failed|Traceback' \
-    BurriTE_output/06_lift_to_ref/liftoff/
-```
-
-### Transfer-table validation
-
-Before building the matrix, BurriTE checks that every sample has one transfer
-row for every collapsed pan-locus. The report is written to:
-
-```text
-08_liftback/validation/transfer_validation.tsv
-```
-
-Missing, duplicated or truncated transfer tables stop the workflow instead of
-producing silently empty final GFF files.
-
-### Inspect a failed Nextflow task
-
-Use the work directory reported by Nextflow:
-
-```bash
-cd /path/reported/as/Work\ dir
-sed -n '1,240p' .command.sh
-cat .command.err
-cat .command.out
-```
-
-The global log can be searched with:
-
-```bash
-grep -nE 'ERROR|WARN|Caused by|ProcessFailedException' .nextflow.log | tail -n 100
-```
-
-### `Failed to publish file` warnings for `RM_<sample>`
-
-The computational task can succeed even when Nextflow cannot copy a result
-from `work/` to `BurriTE_output/`. Check the detailed exception with:
-
-```bash
-grep -A15 -B3 'Failed to publish file' .nextflow.log
-```
-
-In this release, RepeatMasker publishes the complete `RM_<sample>` directory
-and One Code publishes files into the same destination. Because publication is
-asynchronous, an existing destination—especially after `-resume`—can cause a
-directory-copy collision. Downstream tasks consume the cached `work/` outputs,
-but the published `02_RepeatMasker/RM_<sample>` copy should be checked for
-completeness.
-
-Compare a published directory with its work directory:
-
-```bash
-diff -qr \
-    work/xx/task_hash/RM_<sample> \
-    BurriTE_output/02_RepeatMasker/RM_<sample>
-```
-
-Recover the published copy if necessary:
-
-```bash
-mkdir -p BurriTE_output/02_RepeatMasker/RM_<sample>
-rsync -a \
-    work/xx/task_hash/RM_<sample>/ \
-    BurriTE_output/02_RepeatMasker/RM_<sample>/
-```
-
-### GraffiTE or bcftools cannot create temporary files
-
-Errors such as:
-
-```text
-mkdtemp(...) failed: No such file or directory
-no space left on device
-```
-
-usually refer to the temporary filesystem, not the project partition. Provide
-a shared writable directory with sufficient space using
-`--graffite_tmpdir`.
-
-### Liftoff reports invalid GFF syntax or long query names
-
-The current `burrite_stage.py` encodes commas in original TE identifiers and
-uses short IDs such as `BTE00000001_F1` during Liftoff. Original identifiers
-are restored after mapping through `*_anchor_id_map.tsv` files. If errors such
-as `Incorrect GFF/GTF syntax` or `[E::sam_parse1] query name too long` recur,
-verify that `main.nf` and `bin/burrite_stage.py` come from the same release and
-restart with `-resume`.
-
-### Nextflow reports `Invalid method invocation call`
-
-This indicates that a Nextflow channel tuple has a different number of fields than its consumer. It is commonly caused by an outdated `main.nf` or by mixing files from different BurriTE revisions. Replace `main.nf` and the scripts under `bin/` with files from the same current release, then rerun with `-resume`.
-
-## Tests
-
-The lightweight Python smoke test exercises annotation conversion, BED preparation, pan-locus collapse, genotype evaluation, matrix generation, validation barriers and both final-GFF modes without running external
-bioinformatics programs:
-
-```bash
-python tests/smoke_test.py
-```
-
-The Nextflow topology test builds the complete process/channel graph in preview mode and checks that multiple assemblies sharing a chromosome are not dropped:
-
-```bash
-bash tests/nextflow_preview.sh
-```
-
-The preview test requires Nextflow but does not execute RepeatMasker, GraffiTE, Minimap2 or Liftoff.
 
 ## Reproducibility recommendations
 
