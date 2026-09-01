@@ -1,0 +1,4 @@
+assembly,sample
+/absolute/path/genome_A.fasta,genome_A
+/absolute/path/genome_B.fasta,genome_B
+/absolute/path/genome_C.fasta,genome_C

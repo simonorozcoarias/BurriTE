@@ -1,0 +1,16 @@
+name: burrite_v4
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - biopython
+  - pandas
+  - psutil
+  - nextflow=23.10.1
+  - repeatmasker=4.2.4
+  - liftoff=1.6.3
+  - minimap2
+  - samtools
+  - bedtools>=2.31
+  - perl

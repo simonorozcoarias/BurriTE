@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/burrite/burrite/blob/v4/nextflow_schema.json",
+  "title": "BurriTE v4 parameters",
+  "description": "Nextflow DSL2 workflow for TE pan-annotation",
+  "type": "object",
+  "definitions": {
+    "input_output": {
+      "title": "Input/output",
+      "type": "object",
+      "properties": {
+        "assemblies": {
+          "type": "string",
+          "format": "file-path",
+          "description": "CSV with assembly,sample columns"
+        },
+        "te_lib": {
+          "type": "string",
+          "format": "file-path",
+          "description": "TE library FASTA"
+        },
+        "reference": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Reference assembly FASTA"
+        },
+        "chromosome_list": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Reference chromosome IDs, one per line"
+        },
+        "outdir": {
+          "type": "string",
+          "default": "BurriTE_output"
+        },
+        "onecode_dir": {
+          "type": "string",
+          "format": "directory-path"
+        }
+      },
+      "required": [
+        "assemblies",
+        "te_lib",
+        "reference",
+        "chromosome_list"
+      ]
+    },
+    "graffite": {
+      "title": "GraffiTE",
+      "type": "object",
+      "properties": {
+        "graffite_vcf": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "file-path",
+          "description": "Existing pangenome.vcf; skips GraffiTE"
+        },
+        "graffite_image": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "file-path",
+          "description": "Previously downloaded SIF/IMG"
+        },
+        "graffite_tmpdir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "directory-path"
+        },
+        "graffite_profile": {
+          "type": "string",
+          "default": "cluster"
+        },
+        "graffite_cpus": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 40
+        }
+      }
+    },
+    "analysis": {
+      "title": "Analysis",
+      "type": "object",
+      "properties": {
+        "include_reference": {
+          "type": "string",
+          "enum": [
+            "Y",
+            "N"
+          ],
+          "default": "Y"
+        },
+        "flank_size": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 500
+        },
+        "min_length": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "max_length": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "merge_method": {
+          "type": "string",
+          "enum": [
+            "incremental",
+            "groupby"
+          ],
+          "default": "incremental"
+        },
+        "merge_by": {
+          "type": "string",
+          "enum": [
+            "family",
+            "superfamily"
+          ],
+          "default": "superfamily"
+        },
+        "final_annotation": {
+          "type": "string",
+          "enum": [
+            "burrite",
+            "all"
+          ],
+          "default": "burrite"
+        },
+        "final_annotation_dedup_overlap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5
+        },
+        "lenthr": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 100
+        },
+        "minlen": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "bedmin": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 100
+        }
+      }
+    },
+    "resources": {
+      "title": "Resources and SLURM",
+      "type": "object",
+      "properties": {
+        "repeatmasker_cpus": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 16
+        },
+        "minimap_cpus": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 16
+        },
+        "liftoff_cpus": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 4
+        },
+        "queue": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cluster_options": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/input_output"
+    },
+    {
+      "$ref": "#/definitions/graffite"
+    },
+    {
+      "$ref": "#/definitions/analysis"
+    },
+    {
+      "$ref": "#/definitions/resources"
+    }
+  ]
+}
