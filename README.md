@@ -1,5 +1,5 @@
 # BurriTE
-Pan-annotation of transposable elements for population 
+Scalable pan-annotation of transposable elements for population genomics
 
 **BurriTE** builds transposable-element (TE) pan-annotations from a reference genome and multiple alternative assemblies. It integrates polymorphic TE calls from GraffiTE with homology-based annotations from RepeatMasker and One Code To Find Them All, reconciles orthologous TE loci through two rounds of flank transfer, and produces presence/absence matrices and enriched per-genome GFF3 files.
 
